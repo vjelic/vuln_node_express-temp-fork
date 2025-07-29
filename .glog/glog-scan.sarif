@@ -1,0 +1,505 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Glog.AI",
+          "organization": "Glog.AI",
+          "fullName": "Glog, Making software more secure",
+          "version": "1.0.0",
+          "semanticVersion": "1.0.0",
+          "informationUri": "https://www.glog.ai",
+          "rules": [
+            {
+              "id": "glog-3c04223a-5809-459b-a774-a52c7a7947ff",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Container Privilege Escalation Vulnerability\" in the context of JavaScript applications typically refers to a security flaw where an attacker can gain elevated privileges within a containerized environment. This can occur when a JavaScript application running inside a container is misconfigured, allowing unauthorized access to sensitive operations or data. This vulnerability can be exploited if the application has excessive permissions or if there are insecure configurations in the container setup.\n\n### General Mitigation Advice\n\n1. **Least Privilege Principle**: Ensure that the container runs with the least privileges necessary. Avoid running containers as the root user unless absolutely necessary.\n2. **Secure Configuration**: Use secure configurations for your container orchestration tools (e.g., Docker, Kubernetes) to prevent privilege escalation.\n3. **Regular Updates**: Keep your container images and dependencies up to date to mitigate known vulnerabilities.\n4. **Network Policies**: Implement strict network policies to control the communication between containers.\n5. **Security Scanning**: Regularly scan your container images for vulnerabilities using tools like Clair or Trivy.\n\n### Source Code Fix Recommendation\n\nTo mitigate the risk of privilege escalation in the context of the `CMD [\"npm\", \"run\", \"start\"]` command, ensure that:\n\n- The application does not run as the root user.\n- The Dockerfile specifies a non-root user to run the application.\n\nExample Dockerfile fix:\n\n```dockerfile\n# Use a base image\nFROM node:14\n\n# Create and set the working directory\nWORKDIR /usr/src/app\n\n# Copy package.json and package-lock.json\nCOPY package*.json ./\n\n# Install dependencies\nRUN npm install\n\n# Copy the rest of the application code\nCOPY . .\n\n# Create a non-root user and switch to it\nRUN useradd -m appuser\nUSER appuser\n\n# Expose the application port\nEXPOSE 3000\n\n# Start the application\nCMD [\"npm\", \"run\", \"start\"]\n```\n\n### Library Dependencies\n\nTo execute the code example properly, the following dependencies are typically required:\n\n- Node.js\n- npm (Node Package Manager)\n\n### OWASP Resources\n\n- [OWASP Docker Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)\n- [OWASP Node.js Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-269: Improper Privilege Management](https://cwe.mitre.org/data/definitions/269.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.missing-user"
+                ]
+              }
+            },
+            {
+              "id": "glog-66eefb1b-822e-4062-b382-3c159e11f235",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Code Injection Vulnerability in GitHub Actions Using Untrusted `github` Context Data\" refers to a security flaw where untrusted data from the `github` context is used in a way that could allow an attacker to execute arbitrary code. In the provided example, the `github.actor` is used directly in a shell command without proper sanitization, which could lead to command injection if an attacker is able to manipulate this value.\n\n### Mitigation Advice\n\nTo mitigate this vulnerability, ensure that any data from the `github` context is properly sanitized before being used in shell commands. Avoid using untrusted data directly in shell commands. Instead, use parameterized inputs or escape the data properly.\n\n### Source Code Fix Recommendation\n\nTo fix the specific vulnerability in the provided code snippet, you can use the following approach:\n\n```yaml\nrun: |\n  echo \"${{ inputs.github-token }}\" | docker login ghcr.io -u \"${{ github.actor }}\" --password-stdin\n```\n\nIn this fix, the `${{ github.actor }}` is enclosed in double quotes to prevent command injection. Additionally, consider using a more secure method to handle sensitive data and avoid exposing it in logs.\n\n### Library Dependencies\n\nThe code example provided is a part of a GitHub Actions workflow and does not require any additional JavaScript library dependencies to execute. It relies on the GitHub Actions environment and Docker.\n\n### OWASP Resources\n\n- [OWASP Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-77: Improper Neutralization of Special Elements used in a Command ('Command Injection')](https://cwe.mitre.org/data/definitions/77.html)"
+              },
+              "properties": {
+                "tags": [
+                  "yaml.github-actions.security.run-shell-injection.run-shell-injection"
+                ]
+              }
+            },
+            {
+              "id": "glog-d421f7e0-08fe-4477-be45-9d64a160be19",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"XSS Vulnerability from User-Controlled HTML Data\" refers to a security flaw where an attacker can inject malicious scripts into web applications by exploiting user-controlled input fields. In JavaScript, this often occurs when user input is not properly sanitized and is directly inserted into HTML content or executed as code. This can lead to unauthorized actions, data theft, and other malicious activities.\n\nIn the provided code snippet, the vulnerability arises from the use of user input (`searchText`) in a SQL query without proper sanitization or parameterization. This can lead to SQL Injection, which is a separate but related issue. However, if the results of this query are rendered directly into an HTML page without proper escaping, it can also lead to XSS vulnerabilities.\n\n### General Mitigation Advice\n\n1. **Input Validation and Sanitization**: Always validate and sanitize user inputs. Use libraries or frameworks that automatically handle this for you.\n2. **Parameterized Queries**: Use parameterized queries to prevent SQL Injection, which can indirectly help prevent XSS by ensuring that only valid data is processed.\n3. **Output Encoding**: Ensure that any data rendered into HTML is properly encoded to prevent script execution.\n4. **Content Security Policy (CSP)**: Implement CSP headers to restrict the sources from which scripts can be loaded and executed.\n\n### Source Code Fix Recommendation\n\nTo mitigate the vulnerability in the provided code, use parameterized queries to prevent SQL Injection and ensure that any data rendered into HTML is properly escaped.\n\n```javascript\ndb.all(\"select id,name,description from item where name like ?\", ['%' + searchText + '%'], function (err, rows) {\n  if (err) {\n    console.log('error ' + err);\n    cb(err);\n  } else {\n    console.log('rows? ' + rows);\n    console.log('got ' + rows.length + ' rows');\n    const ret = {\n      searchText: searchText,\n      rows: rows\n    };\n    cb(null, ret);\n  }\n});\n```\n\n### Library Dependencies\n\nThe code example requires the following library to execute properly:\n\n- `sqlite3`: This library is used to interact with SQLite databases in Node.js applications.\n\n### OWASP Resources\n\n- [OWASP Cross-Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP SQL Injection Prevention Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)\n- [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')](https://cwe.mitre.org/data/definitions/89.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.raw-html-concat"
+                ]
+              }
+            },
+            {
+              "id": "glog-9d59e8de-6f11-4691-b560-11231d8f8c19",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"XSS Vulnerability from User-Controlled HTML Data\" refers to a security flaw where an attacker can inject malicious scripts into web applications by exploiting user-controlled input fields. In JavaScript, this often occurs when user input is not properly sanitized and is directly inserted into HTML content or executed as code. This can lead to unauthorized actions, data theft, and other malicious activities.\n\nIn the provided code snippet, the vulnerability arises from the use of user input (`searchText`) in a SQL query without proper sanitization or parameterization. This can lead to SQL Injection, which is a separate but related issue. However, if the results of this query are rendered directly into an HTML page without proper escaping, it can also lead to XSS vulnerabilities.\n\n### General Mitigation Advice\n\n1. **Input Validation and Sanitization**: Always validate and sanitize user inputs. Use libraries or frameworks that automatically handle this for you.\n2. **Parameterized Queries**: Use parameterized queries to prevent SQL Injection, which can indirectly help prevent XSS by ensuring that only valid data is processed.\n3. **Output Encoding**: Ensure that any data rendered into HTML is properly encoded to prevent script execution.\n4. **Content Security Policy (CSP)**: Implement CSP headers to restrict the sources from which scripts can be loaded and executed.\n\n### Source Code Fix Recommendation\n\nTo mitigate the vulnerability in the provided code, use parameterized queries to prevent SQL Injection and ensure that any data rendered into HTML is properly escaped.\n\n```javascript\ndb.all(\"select id,name,description from item where name like ?\", ['%' + searchText + '%'], function (err, rows) {\n  if (err) {\n    console.log('error ' + err);\n    cb(err);\n  } else {\n    console.log('rows? ' + rows);\n    console.log('got ' + rows.length + ' rows');\n    const ret = {\n      searchText: searchText,\n      rows: rows\n    };\n    cb(null, ret);\n  }\n});\n```\n\n### Library Dependencies\n\nThe code example requires the following library to execute properly:\n\n- `sqlite3`: This library is used to interact with SQLite databases in Node.js applications.\n\n### OWASP Resources\n\n- [OWASP Cross-Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP SQL Injection Prevention Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)\n- [CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')](https://cwe.mitre.org/data/definitions/89.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.raw-html-concat"
+                ]
+              }
+            },
+            {
+              "id": "glog-5fb5e2c6-71da-4b57-8027-faa74b9fd309",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"XSS Vulnerability from User-Controlled HTML Data\" in JavaScript occurs when an application includes untrusted data in a web page without proper validation or escaping. This can allow an attacker to execute arbitrary JavaScript code in the context of the user's browser, leading to potential data theft, session hijacking, or other malicious activities.\n\nIn the provided code snippet, the vulnerability arises from the use of `console.log('rows? ' + rows);` where `rows` is assumed to be user-controlled data. If `rows` contains malicious JavaScript code, it could be executed in the browser's console, leading to an XSS attack.\n\n### General Mitigation Advice\n\n1. **Input Validation**: Always validate and sanitize user inputs on both the client and server sides.\n2. **Output Encoding**: Encode data before rendering it in the browser to prevent execution of malicious scripts.\n3. **Content Security Policy (CSP)**: Implement CSP headers to restrict the sources from which scripts can be loaded.\n4. **Use Security Libraries**: Utilize libraries that provide built-in protection against XSS attacks.\n\n### Source Code Fix Recommendation\n\nTo mitigate the XSS vulnerability in the given code, ensure that the `rows` variable is properly sanitized and encoded before being logged. Here is a revised version of the code:\n\n```javascript\n// Assuming rows is a string, sanitize it before logging\nfunction sanitizeInput(input) {\n    return input.replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n}\n\nconst sanitizedRows = sanitizeInput(rows);\nconsole.log('rows? ' + sanitizedRows);\n```\n\n### Library Dependencies\n\nThe code example provided does not require any external library dependencies to execute properly.\n\n### OWASP Resources\n\n- [OWASP Cross-Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP XSS Prevention Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.raw-html-concat"
+                ]
+              }
+            },
+            {
+              "id": "glog-995fc63a-e4a7-477a-8fb9-ddb28c1f9268",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"XSS from user-controlled HTML data\" vulnerability occurs when an application includes untrusted data in a web page without proper validation or escaping, allowing attackers to execute arbitrary JavaScript in the context of the user's browser. This can lead to session hijacking, defacement, or redirection to malicious sites.\n\nIn JavaScript, this vulnerability often arises when user input is directly inserted into the DOM or used in JavaScript code without proper sanitization. The specific vulnerability sink in the example is the `console.log('error ' + err);` statement, where `err` is assumed to be user-controlled data.\n\n### General Mitigation Advice\n\n1. **Input Validation**: Validate and sanitize all user inputs on both the client and server sides.\n2. **Output Encoding**: Use appropriate encoding functions to escape data before inserting it into the HTML or JavaScript context.\n3. **Content Security Policy (CSP)**: Implement a strong CSP to restrict the sources from which scripts can be loaded.\n4. **Use Security Libraries**: Utilize libraries that automatically handle input sanitization and output encoding.\n\n### Source Code Fix Recommendation\n\nTo mitigate the vulnerability in the specific sink, ensure that the `err` variable is properly sanitized before being logged. You can use a library like `DOMPurify` to sanitize the input:\n\n```javascript\nconst DOMPurify = require('dompurify');\n\n// Assume err is user-controlled data\nlet sanitizedErr = DOMPurify.sanitize(err);\nconsole.log('error ' + sanitizedErr);\n```\n\n### Library Dependencies\n\nTo execute the code example properly, you need the following library:\n\n- `dompurify`: A library to sanitize HTML and prevent XSS attacks.\n\nYou can install it using npm:\n\n```bash\nnpm install dompurify\n```\n\n### Relevant Resources\n\n- [OWASP Cross-Site Scripting (XSS) Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)\n- [OWASP Content Security Policy (CSP) Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html)\n- [Common Weakness Enumeration: CWE-79](https://cwe.mitre.org/data/definitions/79.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.raw-html-concat"
+                ]
+              }
+            },
+            {
+              "id": "glog-734da839-1d8b-47b6-8fa1-85cb822d5c80",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Code Injection Vulnerability in GitHub Actions Using Untrusted `github` Context Data\" refers to a security flaw where untrusted data from the `github` context is used to construct shell commands. This can lead to code injection if the data is not properly sanitized, allowing an attacker to execute arbitrary commands within the GitHub Actions environment. In the provided code snippet, the `TOOL_CMD` variable is constructed using inputs from the `github` context without proper validation or sanitization, making it susceptible to injection attacks.\n\n### General Mitigation Advice\n\n1. **Input Validation and Sanitization**: Always validate and sanitize inputs from untrusted sources. Use whitelisting to allow only expected values.\n2. **Use Safe APIs**: Prefer using APIs or libraries that handle input safely, avoiding direct shell command construction.\n3. **Environment Isolation**: Run potentially dangerous commands in isolated environments where possible, such as containers with limited permissions.\n4. **Least Privilege Principle**: Ensure that the GitHub Actions workflow has the minimum permissions necessary to perform its tasks.\n\n### Source Code Fix Recommendation\n\nTo mitigate the vulnerability, avoid constructing shell commands directly with untrusted input. Instead, use parameterized commands or a safer method to handle inputs. Here's a revised version of the code:\n\n```yaml\nrun: |\n  TOOL_CMD=\"${{ github.action_path }}/glog.sh scan --path $GITHUB_WORKSPACE\"\n  ARGS=()\n  if [ ! -z \"${{ inputs.lang }}\" ]; then\n    ARGS+=(\"--lang\" \"${{ inputs.lang }}\")\n  fi\n  if [ ! -z \"${{ inputs.ignore }}\" ]; then\n    ARGS+=(\"--ignore\" \"${{ inputs.ignore }}\")\n  fi\n  if [ ! -z \"${{ inputs.client }}\" ]; then\n    ARGS+=(\"--client\" \"${{ inputs.client }}\")\n  fi\n  \"$TOOL_CMD\" \"${ARGS[@]}\"\n```\n\n### Library Dependencies\n\nThe code example provided is a shell script executed within a GitHub Actions workflow and does not require additional JavaScript library dependencies to execute. However, ensure that the `glog.sh` script and any tools it depends on are available in the environment.\n\n### OWASP Resources\n\n- [OWASP Command Injection](https://owasp.org/www-community/attacks/Command_Injection)\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-77: Improper Neutralization of Special Elements used in a Command ('Command Injection')](https://cwe.mitre.org/data/definitions/77.html)"
+              },
+              "properties": {
+                "tags": [
+                  "yaml.github-actions.security.run-shell-injection.run-shell-injection"
+                ]
+              }
+            },
+            {
+              "id": "glog-f9d9e2a8-dd4c-4fca-bcaf-64dedc9ab318",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Container Privilege Escalation Vulnerability\" in the context of JavaScript applications typically refers to a scenario where an attacker can exploit misconfigurations or vulnerabilities within a containerized environment to gain elevated privileges. This can occur if the application running inside the container has excessive permissions or if the container itself is not properly isolated from the host system. In JavaScript applications, this might involve using Node.js processes that are granted more privileges than necessary, potentially allowing an attacker to execute arbitrary commands or access sensitive data.\n\n### General Mitigation Advice\n\n1. **Principle of Least Privilege**: Ensure that containers run with the minimum privileges necessary. Avoid running containers as the root user unless absolutely necessary.\n2. **Use Non-Root User**: Configure your Dockerfile to use a non-root user to run the application.\n3. **Update Regularly**: Keep your base images and dependencies up to date to mitigate known vulnerabilities.\n4. **Network Policies**: Implement strict network policies to limit container communication to only what is necessary.\n5. **Security Contexts**: Use security contexts to define privilege and access control settings for your containers.\n6. **Container Scanning**: Regularly scan your container images for vulnerabilities using tools like Clair or Trivy.\n\n### Source Code Fix Recommendation\n\nTo mitigate the risk of privilege escalation, modify your Dockerfile to run the application as a non-root user. Here is an example of how you can adjust your Dockerfile:\n\n```dockerfile\n# Use an official Node.js runtime as a parent image\nFROM node:14\n\n# Create a non-root user and group\nRUN groupadd -r appuser && useradd -r -g appuser appuser\n\n# Set the working directory\nWORKDIR /usr/src/app\n\n# Copy application files\nCOPY . .\n\n# Install dependencies\nRUN npm install\n\n# Change ownership of the application files\nRUN chown -R appuser:appuser /usr/src/app\n\n# Switch to the non-root user\nUSER appuser\n\n# Command to run the application\nCMD [\"npm\", \"run\", \"start\"]\n```\n\n### Library Dependencies\n\nTo execute the code example properly, the following library dependencies are required:\n\n- Node.js (version 14 or compatible)\n- npm (Node Package Manager)\n\nEnsure that your `package.json` file includes all necessary dependencies for your application.\n\n### OWASP Resources\n\n- [OWASP Docker Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)\n- [OWASP Node.js Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-269: Improper Privilege Management](https://cwe.mitre.org/data/definitions/269.html)\n- [CWE-250: Execution with Unnecessary Privileges](https://cwe.mitre.org/data/definitions/250.html)"
+              },
+              "properties": {
+                "tags": [
+                  "dockerfile.security.missing-user.missing-user"
+                ]
+              }
+            },
+            {
+              "id": "glog-f7d69d03-1007-4089-9c8a-efc25e724425",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"XSS Vulnerability from User-Controlled HTML Data\" occurs when an application includes untrusted data in a web page without proper validation or escaping, allowing an attacker to execute arbitrary JavaScript in the context of the user's browser. This can lead to session hijacking, defacement, or redirection to malicious sites.\n\nIn the context of the JavaScript code snippet provided:\n\n```javascript\nconsole.log('got ' + rows.length + ' rows');\n```\n\nIf `rows` is derived from user-controlled input and is not properly sanitized, it could lead to an XSS vulnerability if the data is rendered in the DOM or used in a way that affects the page's HTML or JavaScript execution.\n\n### General Mitigation Advice\n\n1. **Input Validation**: Validate and sanitize all user inputs on both the client and server sides.\n2. **Output Encoding**: Encode data before rendering it in the browser. Use libraries or frameworks that automatically handle encoding.\n3. **Content Security Policy (CSP)**: Implement CSP headers to restrict the sources from which scripts can be loaded and executed.\n4. **Use Trusted Libraries**: Utilize libraries that are designed to handle HTML safely, such as DOMPurify for sanitizing HTML.\n\n### Source Code Fix Recommendation\n\nTo mitigate the risk of XSS in the provided code snippet, ensure that any data used in the application is properly sanitized and encoded before being logged or rendered. If `rows` is derived from user input, ensure it is sanitized:\n\n```javascript\n// Assuming rows is an array of objects\nconst sanitizedRows = rows.map(row => {\n  return {\n    ...row,\n    // Sanitize each property that could be user-controlled\n    property: DOMPurify.sanitize(row.property)\n  };\n});\n\nconsole.log('got ' + sanitizedRows.length + ' rows');\n```\n\n### Library Dependencies\n\nTo execute the code example with the recommended fix, you will need the following library:\n\n- `dompurify`: A library to sanitize HTML and prevent XSS attacks.\n\n### OWASP Resources\n\n- [OWASP Cross-Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP XSS Prevention Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.raw-html-concat"
+                ]
+              }
+            },
+            {
+              "id": "glog-88874552-de4b-47be-b7ba-903c898132c2",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Explicit Unescape in Pug Template Leading to XSS Vulnerability\" occurs when user input is directly inserted into a Pug template without proper escaping, allowing an attacker to inject malicious scripts. In the given code example, the use of `!=` in Pug templates explicitly unescapes the content, which can lead to Cross-Site Scripting (XSS) if `searchText` contains malicious input.\n\n### General Mitigation Advice\n\n1. **Escape User Input**: Always escape user input before rendering it in the template. Use the `=` operator in Pug to automatically escape HTML.\n2. **Validate Input**: Implement input validation to ensure that only expected data is processed.\n3. **Content Security Policy (CSP)**: Implement CSP headers to mitigate the impact of XSS by restricting the sources of content that can be loaded.\n4. **Use Security Libraries**: Utilize libraries like DOMPurify to sanitize HTML content.\n\n### Source Code Fix Recommendation\n\nTo fix the vulnerability, change the `!=` operator to `=` in the Pug template to ensure that the `searchText` is properly escaped:\n\n```pug\nh1= 'Search Results for: ' + searchText\n```\n\n### Library Dependencies\n\nTo execute the Pug template properly, you need the following library dependencies:\n\n- `pug`: A high-performance template engine heavily influenced by Haml and implemented with JavaScript for Node.js and browsers.\n\n### OWASP Resources\n\n- [OWASP Cross Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP Secure Coding Practices - Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)"
+              },
+              "properties": {
+                "tags": [
+                  "javascript.express.security.audit.xss.pug.explicit-unescape.template-explicit-unescape"
+                ]
+              }
+            },
+            {
+              "id": "glog-9726316c-c138-4ecb-8c31-a88fa9f60d6b",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nCross-Site Scripting (XSS) is a security vulnerability that allows an attacker to inject malicious scripts into content from otherwise trusted websites. In the context of a Pug template, this vulnerability can occur when user input is not properly sanitized before being rendered in the HTML output. The specific vulnerability sink in the code example is:\n\n```pug\nh1!= 'Search Results for: ' + searchText\n```\n\nIn this line, the `searchText` variable is directly concatenated into the HTML without any escaping or sanitization, which can lead to XSS if `searchText` contains malicious scripts.\n\n### General Mitigation Advice\n\n1. **Escape User Input**: Always escape user input before rendering it in the HTML. Use appropriate escaping functions provided by the template engine or manually escape special characters.\n2. **Validate Input**: Implement strict input validation to ensure that only expected data is processed.\n3. **Content Security Policy (CSP)**: Implement CSP headers to restrict the execution of scripts and mitigate the impact of XSS.\n4. **Use Security Libraries**: Utilize libraries that automatically handle escaping and sanitization.\n\n### Source Code Fix Recommendation\n\nTo fix the XSS vulnerability in the Pug template, use the `h1=` syntax which automatically escapes the content:\n\n```pug\nh1= 'Search Results for: ' + searchText\n```\n\nThis change ensures that any special characters in `searchText` are properly escaped, preventing the execution of malicious scripts.\n\n### Library Dependencies\n\nTo execute the Pug template code properly, you need the following library dependencies:\n\n- `pug`: The Pug template engine for rendering templates.\n\nYou can install it using npm:\n\n```bash\nnpm install pug\n```\n\n### OWASP Resources\n\n- [OWASP Cross-Site Scripting (XSS)](https://owasp.org/www-community/attacks/xss/)\n- [OWASP XSS Prevention Cheat Sheet](https://owasp.org/www-project-cheat-sheets/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')](https://cwe.mitre.org/data/definitions/79.html)"
+              },
+              "properties": {
+                "tags": [
+                  "resources.rules.template-explicit-unescape"
+                ]
+              }
+            }
+          ],
+          "language": "en-US",
+          "contents": [
+            "localizedData",
+            "nonLocalizedData"
+          ],
+          "isComprehensive": false
+        }
+      },
+      "language": "en-US",
+      "results": [
+        {
+          "ruleId": "glog-3c04223a-5809-459b-a774-a52c7a7947ff",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Container Privilege Escalation Vulnerability"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Dockerfile",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 1,
+                  "endLine": 8,
+                  "endColumn": 28,
+                  "snippet": {
+                    "text": "CMD [\"npm\", \"run\", \"start\"]"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-66eefb1b-822e-4062-b382-3c159e11f235",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Code Injection Vulnerability in GitHub Actions Using Untrusted `github` Context Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/glog-action/action.yml",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 41,
+                  "startColumn": 7,
+                  "endLine": 41,
+                  "endColumn": 108,
+                  "snippet": {
+                    "text": "      run: echo \"${{ inputs.github-token }}\" | docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-d421f7e0-08fe-4477-be45-9d64a160be19",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "XSS Vulnerability from User-Controlled HTML Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "service/search.js",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 3,
+                  "endLine": 23,
+                  "endColumn": 5,
+                  "snippet": {
+                    "text": "  db.all(\"select id,name,description from item where name like '%\" + searchText + \"%'\", [], function (err, rows) {\n  //db.all(\"select id,name,description from item where name like '%?%'\", [searchText], function (err, rows) {\n    if (err) {\n      console.log('error ' + err);\n      cb(err);\n      //res.redirect('/search')\n    } else {\n      //console.log(req.body);\n      console.log('rows? ' + rows);\n      console.log('got ' + rows.length + ' rows');\n      const ret = {\n        searchText: searchText,\n        rows: rows\n      };\n      cb(null, ret);\n      //res.render('searchResult', ret)\n    }\n  });"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-9d59e8de-6f11-4691-b560-11231d8f8c19",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "XSS Vulnerability from User-Controlled HTML Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "service/search.js",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 3,
+                  "endLine": 23,
+                  "endColumn": 6,
+                  "snippet": {
+                    "text": "  db.all(\"select id,name,description from item where name like '%\" + searchText + \"%'\", [], function (err, rows) {\n  //db.all(\"select id,name,description from item where name like '%?%'\", [searchText], function (err, rows) {\n    if (err) {\n      console.log('error ' + err);\n      cb(err);\n      //res.redirect('/search')\n    } else {\n      //console.log(req.body);\n      console.log('rows? ' + rows);\n      console.log('got ' + rows.length + ' rows');\n      const ret = {\n        searchText: searchText,\n        rows: rows\n      };\n      cb(null, ret);\n      //res.render('searchResult', ret)\n    }\n  });"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-5fb5e2c6-71da-4b57-8027-faa74b9fd309",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "XSS Vulnerability from User-Controlled HTML Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "service/search.js",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 7,
+                  "endLine": 14,
+                  "endColumn": 36,
+                  "snippet": {
+                    "text": "      console.log('rows? ' + rows);"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-995fc63a-e4a7-477a-8fb9-ddb28c1f9268",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "XSS from user-controlled HTML data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "service/search.js",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 7,
+                  "endLine": 9,
+                  "endColumn": 35,
+                  "snippet": {
+                    "text": "      console.log('error ' + err);"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-734da839-1d8b-47b6-8fa1-85cb822d5c80",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Code Injection Vulnerability in GitHub Actions Using Untrusted `github` Context Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/glog-action/action.yml",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 45,
+                  "startColumn": 7,
+                  "endLine": 56,
+                  "endColumn": 19,
+                  "snippet": {
+                    "text": "      run: |\n        TOOL_CMD=\"${{ github.action_path }}/glog.sh scan --path $GITHUB_WORKSPACE\"\n        if [ ! -z \"${{ inputs.lang }}\" ]; then\n          TOOL_CMD+=\" --lang ${{ inputs.lang }}\"\n        fi\n        if [ ! -z \"${{ inputs.ignore }}\" ]; then\n          TOOL_CMD+=\" --ignore ${{ inputs.ignore }}\"\n        fi\n        if [ ! -z \"${{ inputs.client }}\" ]; then\n          TOOL_CMD+=\" --client ${{ inputs.client }}\"\n        fi\n        $TOOL_CMD"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-f9d9e2a8-dd4c-4fca-bcaf-64dedc9ab318",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Container Privilege Escalation Vulnerability"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Dockerfile",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 1,
+                  "endLine": 8,
+                  "endColumn": 28,
+                  "snippet": {
+                    "text": "CMD [\"npm\", \"run\", \"start\"]"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-f7d69d03-1007-4089-9c8a-efc25e724425",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "XSS Vulnerability from User-Controlled HTML Data"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "service/search.js",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 7,
+                  "endLine": 15,
+                  "endColumn": 51,
+                  "snippet": {
+                    "text": "      console.log('got ' + rows.length + ' rows');"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-88874552-de4b-47be-b7ba-903c898132c2",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Explicit Unescape in Pug Template Leading to XSS Vulnerability"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "views/searchResult.pug",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 3,
+                  "endLine": 4,
+                  "endColumn": 43,
+                  "snippet": {
+                    "text": "  h1!= 'Search Results for: ' + searchText"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        },
+        {
+          "ruleId": "glog-9726316c-c138-4ecb-8c31-a88fa9f60d6b",
+          "kind": "fail",
+          "level": "warning",
+          "message": {
+            "text": "Cross-Site Scripting (XSS) Vulnerability in Pug Template"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "views/searchResult.pug",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 3,
+                  "endLine": 4,
+                  "endColumn": 43,
+                  "snippet": {
+                    "text": "  h1!= 'Search Results for: ' + searchText"
+                  }
+                }
+              }
+            }
+          ],
+          "fingerprints": {
+            "matchBasedId/v1": "requires login"
+          },
+          "properties": {}
+        }
+      ],
+      "newlineSequences": [
+        "\r\n",
+        "\n"
+      ]
+    }
+  ]
+}
